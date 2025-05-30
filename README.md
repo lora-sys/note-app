@@ -1,1 +1,1 @@
-#my first fuckstack app
+# my firststack app
