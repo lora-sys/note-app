@@ -73,6 +73,14 @@ note-app/
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 提交 Pull Request
 
+## 🐞 已知问题与改进建议
+
+- NoteCard 输入保存已增加防抖优化，提升性能
+- NoteCard 支持删除笔记，UI 交互更友好
+- 支持新建笔记按钮，提升用户体验
+- NoteCard 组件已拆分为 Header/Body，便于维护
+- 工具函数已增强健壮性，便于单元测试
+
 ## 📄 许可证
 
 基于 MIT 许可证 - 详见 [LICENSE.md](LICENSE.md)

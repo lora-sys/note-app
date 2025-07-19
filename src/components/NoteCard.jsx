@@ -1,8 +1,10 @@
 import { useRef, useEffect, useState } from "react";
 import Trash from "../icons/Trash";
-import { setNewOffset, autoGrow, setZIndex, bodyParser } from "../utils";
+import { setNewOffset, autoGrow, setZIndex, bodyParser, debounce } from "../utils";
 import {db} from "../appwrite/data.jsx"
 import Spinner  from "../icons/Spinner.jsx";
+import NoteCardHeader from "./NoteCardHeader";
+import NoteCardBody from "./NoteCardBody";
 const NoteCard = ({ note }) => {
     const [colors, setColors] = useState(null);
     const [position, setPosition] = useState(null);
@@ -26,17 +28,13 @@ const NoteCard = ({ note }) => {
         
     }, [note.colors, note.position]);
     
-    const handleKeyUp=()=>{
-    //1. init state
+    const debouncedSave = debounce((value) => {
+        saveData("body", value);
+    }, 2000);
+    const handleKeyUp = () => {
         setSaving(true);
-    //2 .
-    if(keyUpTimer.current){
-        clearTimeout(keyUpTimer.current);
-    }
-    keyUpTimer.current=setTimeout(()=>{
-        saveData("body",textAreaRef.current.value);
-    },2000);
-}
+        debouncedSave(textAreaRef.current.value);
+    };
     // 添加默认样式值，防止组件返回 null
     const defaultColors = {
         colorHeader: "#FED0FD",
@@ -97,49 +95,44 @@ const NoteCard = ({ note }) => {
         setSaving(false);
 
     };
-    return <div
-        ref={cardRef}
-        className="card"
-        style={{
-            backgroundColor: currentColors.colorBody,
-            left: `${currentPosition.x}px`,
-            top: `${currentPosition.y}px`,
-            border: '1px solid red',      // 添加调试边框
-            minHeight: '100px'            // 确保即使内容为空也有尺寸
-        }}
-    >
-    <div
-    className="card-header"
-    style={{backgroundColor:currentColors.colorHeader}}
-    onMouseDown={mouseDown}
-    >
-    <Trash/>
-    {
-    saving && (
-        <div className="card-saving">
-            <Spinner color={colors.colorText} />
-            <span style={{ color: colors.colorText }}>Saving...</span>
+    const handleDelete = async () => {
+        setSaving(true);
+        try {
+            await db.notes.delete(note.$id);
+            // 通知父组件刷新列表
+            if (typeof note.onDelete === 'function') note.onDelete(note.$id);
+        } catch (error) {
+            console.error(error);
+        }
+        setSaving(false);
+    };
+    return (
+        <div
+            ref={cardRef}
+            className="card"
+            style={{
+                backgroundColor: currentColors.colorBody,
+                left: `${currentPosition.x}px`,
+                top: `${currentPosition.y}px`,
+                border: '1px solid red',
+                minHeight: '100px',
+            }}
+        >
+            <NoteCardHeader
+                colors={currentColors}
+                saving={saving}
+                onDelete={handleDelete}
+                onMouseDown={mouseDown}
+            />
+            <NoteCardBody
+                colors={currentColors}
+                note={note}
+                textAreaRef={textAreaRef}
+                handleKeyUp={handleKeyUp}
+                setZIndex={() => setZIndex(cardRef.current)}
+            />
         </div>
-    )
-    };   
-    </div>
-    <div className="card-body">
-    <textarea
-    style={{color:currentColors.colorText}}
-    defaultValue={bodyParser(note.body)}
-    ref={textAreaRef}
-    onInput={()=>{
-        autoGrow(textAreaRef);
-    }}
-
-    onFocus={()=>{
-    setZIndex(cardRef.current);  
-    }}
-    onKeyUp={handleKeyUp}
-    >
-    </textarea>
-    </div>
-    </div>;
+    );
 };
 
 
