@@ -34,13 +34,29 @@ const NotesPage=()=>{
             });
         }
     };
+    const handleDelete = (id) => {
+      setNotes((prev) => prev.filter((note) => note.$id !== id));
+    };
+    const handleCreate = async () => {
+      try {
+        const newNote = await db.notes.create({
+          body: '',
+          colors: JSON.stringify({ colorHeader: '#FED0FD', colorBody: '#FEE5FD', colorText: '#18181A' }),
+          position: JSON.stringify({ x: 100, y: 100 })
+        });
+        setNotes((prev) => [...prev, newNote]);
+      } catch (error) {
+        console.error('创建笔记失败:', error);
+      }
+    };
     return(
     <div >
+        <button onClick={handleCreate}>新建笔记</button>
         {notes.length === 0 ? (
             <p>没有找到笔记数据</p>
         ) : (
             notes.map((note) => (
-                <NoteCard note={note} key={note.$id} />
+                <NoteCard note={{ ...note, onDelete: handleDelete }} key={note.$id} />
             ))
         )}
     </div>

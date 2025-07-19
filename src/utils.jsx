@@ -24,19 +24,31 @@ export const setZIndex = (selectedCard) => {
 };
 
 export const bodyParser = (body) => {
-    // 如果是字符串且看起来像 JSON 字符串（被引号包裹）
     if (typeof body === 'string') {
         try {
-            // 只有在确实是 JSON 格式时才解析
             if (body.startsWith('{') || body.startsWith('[')) {
                 return JSON.parse(body);
             }
         } catch(error) {
             console.error("Cannot parse body as JSON:", error);
+            return '';
         }
-        // 对于普通字符串，直接返回
         return body;
     }
-    // 对于非字符串，直接返回
+    if (body === undefined || body === null) return '';
     return body;
 }
+
+// 防抖函数
+export function debounce(fn, delay) {
+  let timer = null;
+  return function (...args) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+    }, delay);
+  };
+}
+
+// 便于单元测试
+export default { setNewOffset, autoGrow, setZIndex, bodyParser, debounce };
