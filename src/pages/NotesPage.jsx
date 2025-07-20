@@ -3,8 +3,12 @@ import { useEffect, useState } from "react";
 import NoteCard  from "../components/NoteCard.jsx";
 // import  {databases} from "../appwrite/config"
 import {db} from "../appwrite/data.jsx"
+
 const NotesPage=()=>{
     const [notes,setNotes]=useState([]);
+    const [isCreating, setIsCreating] = useState(false);
+    const [error, setError] = useState(null);
+    
     // useEffect(()=>{
     //     init();
     // },[]);
@@ -17,6 +21,7 @@ const NotesPage=()=>{
         });
         init();
       }, []);
+      
       const init = async () => {
         try {
             // const response = await databases.listDocuments(
@@ -32,28 +37,80 @@ const NotesPage=()=>{
                 type: error.type,
                 code: error.code
             });
+            setError("加载笔记失败，请检查网络连接");
         }
     };
+    
     const handleDelete = (id) => {
       setNotes((prev) => prev.filter((note) => note.$id !== id));
     };
+    
     const handleCreate = async () => {
-      try {
-        const newNote = await db.notes.create({
-          body: '',
-          colors: JSON.stringify({ colorHeader: '#FED0FD', colorBody: '#FEE5FD', colorText: '#18181A' }),
-          position: JSON.stringify({ x: 100, y: 100 })
-        });
-        setNotes((prev) => [...prev, newNote]);
-      } catch (error) {
-        console.error('创建笔记失败:', error);
-      }
+        if (isCreating) return; // 防止重复点击
+        
+        setIsCreating(true);
+        setError(null);
+        
+        try {
+            const newNote = await db.notes.create({
+                body: '',
+                colors: JSON.stringify({ 
+                    colorHeader: '#FED0FD', 
+                    colorBody: '#FEE5FD', 
+                    colorText: '#18181A' 
+                }),
+                position: JSON.stringify({ 
+                    x: Math.random() * (window.innerWidth - 200) + 50, 
+                    y: Math.random() * (window.innerHeight - 200) + 50 
+                })
+            });
+            setNotes((prev) => [...prev, newNote]);
+        } catch (error) {
+            console.error('创建笔记失败:', error);
+            setError('创建笔记失败，请重试');
+        } finally {
+            setIsCreating(false);
+        }
     };
+    
     return(
-    <div >
-        <button onClick={handleCreate}>新建笔记</button>
+    <div style={{ padding: '20px' }}>
+        <div style={{ 
+            marginBottom: '20px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px' 
+        }}>
+            <button 
+                onClick={handleCreate}
+                disabled={isCreating}
+                style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: isCreating ? 'not-allowed' : 'pointer',
+                    opacity: isCreating ? 0.6 : 1
+                }}
+            >
+                {isCreating ? '创建中...' : '新建笔记'}
+            </button>
+            {error && (
+                <span style={{ color: 'red', fontSize: '14px' }}>
+                    {error}
+                </span>
+            )}
+        </div>
+        
         {notes.length === 0 ? (
-            <p>没有找到笔记数据</p>
+            <div style={{ 
+                textAlign: 'center', 
+                padding: '40px',
+                color: '#666'
+            }}>
+                <p>还没有笔记，点击上方按钮创建第一个笔记吧！</p>
+            </div>
         ) : (
             notes.map((note) => (
                 <NoteCard note={{ ...note, onDelete: handleDelete }} key={note.$id} />
@@ -62,4 +119,5 @@ const NotesPage=()=>{
     </div>
     )
 }
+
 export default NotesPage;

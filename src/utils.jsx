@@ -6,14 +6,18 @@ export const setNewOffset=(card,mouseMoveDir={x:0,y:0})=>{
         y:offsetTop<0 ? 0 : offsetTop,
     };
 };
+
 export function autoGrow(textAreaRef){
     const { current } = textAreaRef;
-    if (!current) return; // 添加防御判断，防止 null 访问
+    if (!current) return;
 
     current.style.height = "auto";
     current.style.height = current.scrollHeight + "px";
 }
+
 export const setZIndex = (selectedCard) => {
+    if (!selectedCard) return;
+    
     selectedCard.style.zIndex = 999;
 
     Array.from(document.getElementsByClassName("card")).forEach((card) => {
@@ -24,30 +28,55 @@ export const setZIndex = (selectedCard) => {
 };
 
 export const bodyParser = (body) => {
-    if (typeof body === 'string') {
+    // 处理 null/undefined 情况
+    if (body === null || body === undefined) {
+        return '';
+    }
+    
+    // 处理非字符串类型
+    if (typeof body !== 'string') {
         try {
-            if (body.startsWith('{') || body.startsWith('[')) {
-                return JSON.parse(body);
-            }
-        } catch(error) {
-            console.error("Cannot parse body as JSON:", error);
+            return String(body);
+        } catch (error) {
+            console.error("无法转换 body 为字符串:", error);
             return '';
         }
+    }
+    
+    // 处理空字符串
+    if (body.trim() === '') {
+        return '';
+    }
+    
+    // 尝试解析 JSON
+    try {
+        if (body.startsWith('{') || body.startsWith('[')) {
+            const parsed = JSON.parse(body);
+            // 如果解析结果是对象或数组，转换为字符串
+            if (typeof parsed === 'object') {
+                return JSON.stringify(parsed);
+            }
+            return String(parsed);
+        }
+    } catch(error) {
+        console.error("无法解析 body 为 JSON:", error);
+        // 解析失败时返回原字符串
         return body;
     }
-    if (body === undefined || body === null) return '';
+    
+    // 对于普通字符串，直接返回
     return body;
-}
+};
 
 // 防抖函数
 export function debounce(fn, delay) {
-  let timer = null;
-  return function (...args) {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      fn.apply(this, args);
-    }, delay);
-  };
+    let timer = null;
+    return function (...args) {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+            fn.apply(this, args);
+        }, delay);
+    };
 }
 
 // 便于单元测试
