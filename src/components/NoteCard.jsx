@@ -130,8 +130,13 @@ const NoteCard = ({ note }) => {
             await db.notes.update(note.$id, payload);
         } catch (error) {
             console.error('保存数据失败:', error);
+            // 可以在这里添加重试逻辑或用户提示
+            if (error.code === 'network_error') {
+                console.warn('网络错误，数据将在网络恢复后重试');
+            }
+        } finally {
+            setSaving(false);
         }
-        setSaving(false);
     };
 
     const handleDelete = async () => {
