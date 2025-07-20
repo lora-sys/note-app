@@ -25,13 +25,7 @@ const NotesPage=()=>{
       
       const init = async () => {
         try {
-            setIsLoading(true);
-            setError(null);
-            // const response = await databases.listDocuments(
-            //     import.meta.env.VITE_DATABASE_ID,
-            //     import.meta.env.VITE_COLLECTION_NOTES_ID
-            // );
-            const response =await db.notes.list();
+            const response = await db.notes.list();
             console.log("API响应:", response);
             setNotes(response.documents);
         } catch (error) {
@@ -40,9 +34,12 @@ const NotesPage=()=>{
                 type: error.type,
                 code: error.code
             });
-            setError("加载笔记失败，请检查网络连接");
-        } finally {
-            setIsLoading(false);
+            // 可以在这里添加用户友好的错误提示
+            if (error.code === 'network_error') {
+                alert('网络连接失败，请检查网络后刷新页面');
+            } else {
+                alert('加载笔记失败，请刷新页面重试');
+            }
         }
     };
     
@@ -51,34 +48,16 @@ const NotesPage=()=>{
     };
     
     const handleCreate = async () => {
-        if (isCreating) return; // 防止重复点击
-        
-        setIsCreating(true);
-        setError(null);
-        
         try {
-            // 生成随机位置，避免重叠
-            const randomX = Math.random() * (window.innerWidth - 300) + 50;
-            const randomY = Math.random() * (window.innerHeight - 300) + 50;
-            
             const newNote = await db.notes.create({
                 body: '',
-                colors: JSON.stringify({ 
-                    colorHeader: '#FED0FD', 
-                    colorBody: '#FEE5FD', 
-                    colorText: '#18181A' 
-                }),
-                position: JSON.stringify({ 
-                    x: randomX, 
-                    y: randomY 
-                })
+                colors: JSON.stringify({ colorHeader: '#FED0FD', colorBody: '#FEE5FD', colorText: '#18181A' }),
+                position: JSON.stringify({ x: 100, y: 100 })
             });
             setNotes((prev) => [...prev, newNote]);
         } catch (error) {
             console.error('创建笔记失败:', error);
-            setError('创建笔记失败，请重试');
-        } finally {
-            setIsCreating(false);
+            alert('创建笔记失败，请检查网络连接后重试');
         }
     };
     
