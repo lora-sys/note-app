@@ -78,7 +78,7 @@ const NoteCard = ({ note }) => {
         
         dragOffset.current = { x: deltaX, y: deltaY };
         
-        // 直接更新 DOM 位置，不触发状态更新
+        // 直接更新 DOM 位置，不触发状态更新，提升性能
         if (cardRef.current) {
             const newX = Math.max(0, currentPosition.x - deltaX);
             const newY = Math.max(0, currentPosition.y - deltaY);
@@ -103,7 +103,7 @@ const NoteCard = ({ note }) => {
         
         setIsDragging(false);
         
-        // 只在 mouseup 时更新状态和保存
+        // 只在 mouseup 时更新状态和保存，提升性能
         if (cardRef.current) {
             const newPosition = {
                 x: Math.max(0, currentPosition.x - dragOffset.current.x),
@@ -135,7 +135,7 @@ const NoteCard = ({ note }) => {
     };
 
     const handleDelete = async () => {
-        if (!confirm('确定要删除这个笔记吗？')) return;
+        if (!confirm('确定要删除这个笔记吗？此操作不可撤销。')) return;
         
         setSaving(true);
         try {
@@ -145,9 +145,10 @@ const NoteCard = ({ note }) => {
             }
         } catch (error) {
             console.error('删除笔记失败:', error);
-            alert('删除失败，请重试');
+            alert('删除失败，请检查网络连接后重试');
+        } finally {
+            setSaving(false);
         }
-        setSaving(false);
     };
 
     return (
