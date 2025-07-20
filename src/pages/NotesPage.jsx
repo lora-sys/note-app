@@ -8,6 +8,7 @@ const NotesPage=()=>{
     const [notes,setNotes]=useState([]);
     const [isCreating, setIsCreating] = useState(false);
     const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
     
     // useEffect(()=>{
     //     init();
@@ -24,6 +25,8 @@ const NotesPage=()=>{
       
       const init = async () => {
         try {
+            setIsLoading(true);
+            setError(null);
             // const response = await databases.listDocuments(
             //     import.meta.env.VITE_DATABASE_ID,
             //     import.meta.env.VITE_COLLECTION_NOTES_ID
@@ -38,6 +41,8 @@ const NotesPage=()=>{
                 code: error.code
             });
             setError("加载笔记失败，请检查网络连接");
+        } finally {
+            setIsLoading(false);
         }
     };
     
@@ -52,6 +57,10 @@ const NotesPage=()=>{
         setError(null);
         
         try {
+            // 生成随机位置，避免重叠
+            const randomX = Math.random() * (window.innerWidth - 300) + 50;
+            const randomY = Math.random() * (window.innerHeight - 300) + 50;
+            
             const newNote = await db.notes.create({
                 body: '',
                 colors: JSON.stringify({ 
@@ -60,8 +69,8 @@ const NotesPage=()=>{
                     colorText: '#18181A' 
                 }),
                 position: JSON.stringify({ 
-                    x: Math.random() * (window.innerWidth - 200) + 50, 
-                    y: Math.random() * (window.innerHeight - 200) + 50 
+                    x: randomX, 
+                    y: randomY 
                 })
             });
             setNotes((prev) => [...prev, newNote]);
@@ -72,6 +81,21 @@ const NotesPage=()=>{
             setIsCreating(false);
         }
     };
+    
+    if (isLoading) {
+        return (
+            <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100vh',
+                fontSize: '18px',
+                color: '#666'
+            }}>
+                加载中...
+            </div>
+        );
+    }
     
     return(
     <div style={{ padding: '20px' }}>
@@ -91,10 +115,12 @@ const NotesPage=()=>{
                     border: 'none',
                     borderRadius: '5px',
                     cursor: isCreating ? 'not-allowed' : 'pointer',
-                    opacity: isCreating ? 0.6 : 1
+                    opacity: isCreating ? 0.6 : 1,
+                    fontSize: '16px',
+                    fontWeight: 'bold'
                 }}
             >
-                {isCreating ? '创建中...' : '新建笔记'}
+                {isCreating ? '创建中...' : '➕ 新建笔记'}
             </button>
             {error && (
                 <span style={{ color: 'red', fontSize: '14px' }}>
